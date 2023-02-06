@@ -49,7 +49,7 @@ function build_message_dict_vector(π::DIAL, env::AbstractEnv)
     messages = Dict(p =>
                     π.emb["message"](
                       # convert(Array{Float32},
-                        reduce(vcat, 
+                        reduce(vcat,
                                [dru(π, m[r]) for r ∈ filter(e -> e != p, players(env))]
                         )
                       # )
@@ -65,7 +65,7 @@ function (π::DIAL)(::PreEpisodeStage, env::AbstractEnv)
     end
 end
 
-# action selection 
+# action selection
 function (π::DIAL)(env::AbstractEnv)
   zₐ = Dict(p => π.emb["agent"](convert(Array{Float32}, Flux.onehot(p, players(env)))) for p ∈ players(env))
   zₒ = Dict(p => π.emb["observation"](state(env, p)) for p in players(env))
@@ -73,7 +73,7 @@ function (π::DIAL)(env::AbstractEnv)
   if length(π.τ[players(env)[end]][:action]) > 0
     # TODO: Implement message embedding as embedding of the messages of the other agents
     zₘ = build_message_dict_vector(π, env)
-    zᵤ = Dict(p => 
+    zᵤ = Dict(p =>
         π.emb["action"](convert(Array{Float32}, Flux.onehot(getindex(π.τ[p][:action], length(π.τ[p][:action])), 1:length(action_space(env)))))
          for p ∈ players(env))
     z = z + zₘ + zᵤ
@@ -87,7 +87,7 @@ function (π::DIAL)(env::AbstractEnv)
   A
 end
 
-# trajectory addition before action is taken. Add current action, transmitted message and observation 
+# trajectory addition before action is taken. Add current action, transmitted message and observation
 function (π::DIAL)(::PreActStage, env::AbstractEnv, action::MultiActionMessage)
     # add messages, hidden states of cnet
     for p in players(env)
