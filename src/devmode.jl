@@ -34,6 +34,7 @@ function activate_devmode!()
     Pkg.develop(path="src/ReinforcementLearningEnvironments")
     Pkg.develop(path="src/ReinforcementLearningCore")
     Pkg.develop(path="src/ReinforcementLearningBase")
+    Pkg.develop(path="src/ReinforcementLearningTrajectories")
     #RL
     Pkg.activate(".")
     Pkg.develop(path="src/ReinforcementLearningZoo")
