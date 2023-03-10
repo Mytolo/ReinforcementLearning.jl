@@ -52,7 +52,7 @@ MvNormal policy. It has a better policy representation but requires more computa
 
 This implementation uses double Q-learning and target Q-networks, 
 unlike the original MPO paper that uses retrace (WIP). The `Approximator` fields should 
-each come with their own `Optimiser` (e.g. `ADAM`). 
+each come with their own `Optimiser` (e.g. `Adam`). 
 
 MPOPolicy requires batches of type 
 ```
@@ -244,7 +244,7 @@ function mpo_loss(p::MPOPolicy{<:Approximator{<:CovGaussianNetwork}}, qij, state
     
     ignore_derivatives() do
         p.α -= p.α_scale*(p.ϵμ - klμ) 
-        p.αΣ -= p.αΣ_scale*(p.ϵμ - klΣ) 
+        p.αΣ -= p.αΣ_scale*(p.ϵΣ - klΣ) 
         p.α = clamp(p.α, 0f0, Inf32)
         p.αΣ = clamp(p.αΣ, 0f0, Inf32)
     end
@@ -280,7 +280,7 @@ function mpo_loss(p::MPOPolicy{<:Approximator{<:GaussianNetwork}}, qij, states, 
     
     ignore_derivatives() do
         p.α -= p.α_scale*(p.ϵμ - klμ) 
-        p.αΣ -= p.αΣ_scale*(p.ϵμ - klΣ) 
+        p.αΣ -= p.αΣ_scale*(p.ϵΣ - klΣ) 
         p.α = clamp(p.α, 0f0, Inf32)
         p.αΣ = clamp(p.αΣ, 0f0, Inf32)
     end
