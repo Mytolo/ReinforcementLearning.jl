@@ -28,7 +28,7 @@ s = ArgParseSettings()
     "episodes"
     help = "Number of epochs"
     arg_type = Int
-    default = 10
+    default = 200
 end
 arguments = parse_args(s)
 
