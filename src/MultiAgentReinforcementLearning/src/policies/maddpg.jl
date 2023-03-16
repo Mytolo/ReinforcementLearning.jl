@@ -80,8 +80,8 @@ function RLBase.optimise!(π::MADDPGManager)
     
     # n_batches = length(first(batches)[2]) since all agents
     # have the same amount of batches. Otherwise, this algorithm
-    # will not be able to be optimised accordingly unless dummy actions
-    # are choosen based on the current state of the other agent`s current policy
+    # will not be able to be trained accordingly unless dummy actions
+    # are chosen based on the current state of the other agent`s current policy
     # state
     for i ∈ 1:length(first(batches)[2])
       optimise!(π, Dict(player => batches[player][i] for (player, ) in π.agents))
