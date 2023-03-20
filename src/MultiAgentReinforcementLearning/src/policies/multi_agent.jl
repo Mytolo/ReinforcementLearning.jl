@@ -40,8 +40,15 @@ function (A::MultiAgentManager)(stage::AbstractStage, env::AbstractEnv)
     A[A.cur_player](stage, env)
 end
 
+function (A::MultiAgentManager)(::PostActStage, env::AbstractEnv)
+    agent = A[A.cur_player]
+    agent.cache = (agent.cache..., reward=reward(env, A.cur_player), terminal=is_terminated(env))
+end
+
 function RLBase.optimise!(A::MultiAgentManager)
     for (_, agent) in A.agents
         RLBase.optimise!(agent)
     end
 end
+
+

@@ -1,9 +1,10 @@
-mutable struct PettingzooEnv{Ta,To,P} <: AbstractEnv
+mutable struct PettingzooEnv{T,Ta,To,P} <: AbstractEnv
     pyenv::P
     observation_space::To
     action_space::Ta
     state::P
     seed::Union{Int, Nothing}
+    rewards::Dict{String, Any}
     ts::Int
 end
 export PettingzooEnv

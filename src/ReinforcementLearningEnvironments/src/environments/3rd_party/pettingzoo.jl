@@ -11,6 +11,12 @@ export PettingzooEnv
 `PettingzooEnv` is an interface of the python library pettingzoo for multi agent reinforcement learning environments. It can be used to test multi
     agent reinforcement learning algorithms implemented in JUlia ReinforcementLearning.
 """
+
+abstract type pettingzooEnvType end
+
+Base.@kwdef struct pettingzooDefault <: pettingzooEnvType end
+
+
 function PettingzooEnv(name::String; seed=123, args...)
     if !PyCall.pyexists("pettingzoo.$name")
        error("Cannot import pettingzoo.$name")
@@ -20,12 +26,13 @@ function PettingzooEnv(name::String; seed=123, args...)
     pyenv.reset(seed=seed)
     obs_space = space_transform(pyenv.observation_space(pyenv.agents[1]))
     act_space = space_transform(pyenv.action_space(pyenv.agents[1]))
-    env = PettingzooEnv{typeof(act_space),typeof(obs_space),typeof(pyenv)}(
+    env = PettingzooEnv{pettingzooDefault(),typeof(act_space),typeof(obs_space),typeof(pyenv)}(
         pyenv,
         obs_space,
         act_space,
         PyNULL,
         seed,
+        Dict(p => pyenv.rewards[p] for p in pyenv.agents),
         1
     )
     env
@@ -118,11 +125,14 @@ end
 function (env::PettingzooEnv)(action::Integer)
     env.ts += 1
     pycall(env.pyenv.step, PyObject, action)
+    if env.ts % length(players(env)) == 0
+        env.rewards = env.pyenv.rewards
+    end
 end
 
 # reward of player ======================================================================================================================
 function RLBase.reward(env::PettingzooEnv, player::String)
-    env.pyenv.rewards[player]
+    env.rewards[player]
 end
 
 
