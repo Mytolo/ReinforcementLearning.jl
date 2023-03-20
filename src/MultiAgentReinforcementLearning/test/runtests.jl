@@ -30,12 +30,38 @@ using Test
                                 ))
                         )
                         for player in players(e)), 
-                        current_player(e))
+                        current_player(e));
         s = [state(e, player) for player in players(e)]
         r = [reward(e, player) for player in players(e)]
         n = 1
-        while !is_terminated(e)
-            run(m, e, StopAfterStep(3), EmptyHook())
+        while n <= 25*length(players(e))
+            println()
+            m(PreActStage(), e)
+
+            e |> m |> e
+
+            if n % length(players(e)) == 0
+              s = hcat(s, [state(e, player) for player in players(e)])
+              r = isempty(r) ? [reward(e, player) for player in players(e)] : hcat(r, [reward(e, player) for player in players(e)])
+            end
+
+            if n % length(players(e)) == 0 && n > length(players(e))
+                for a in players(e)
+                    @test n ÷ length(players(e)) - 1 == length(m.agents[a].trajectory.container)
+                end
+                for (i, a) in enumerate(players(e))
+                    # states are stored previous to taking action => step - 1 where step is n ÷ length(players(e)) because of sequential execution
+                    @test s[i, n ÷ length(players(e)) - 1] == m.agents[a].trajectory.container[:state][n ÷ length(players(e)) - 1]
+                end
+                for (i, a) in enumerate(players(e))
+                    # rewards are stored in trajectory after players done their action
+                    @test r[i, n ÷ length(players(e)) - 1] == m.agents[a].trajectory.container[:reward][n ÷ length(players(e)) - 1]
+                end
+            end
+            
+            optimise!(m)
+
+            m(PostActStage(), e)
             n += 1
         end
         
