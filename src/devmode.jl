@@ -3,10 +3,10 @@ using Pkg
 """
     activate_devmode!()
 
-This will automatically dev all the packages of the RL.jl ecosystem (make sure your 
-working directory is ReinforcementLearning.jl). You should do this when you 
-create a new branch for a new PR and voilà, you're good to go. This function imitates 
-the process in the `ci.yml` file. This means that tests that you run locally should 
+This will automatically dev all the packages of the RL.jl ecosystem (make sure your
+working directory is ReinforcementLearning.jl). You should do this when you
+create a new branch for a new PR and voilà, you're good to go. This function imitates
+the process in the `ci.yml` file. This means that tests that you run locally should
 work in github's CI.
 """
 function activate_devmode!()
@@ -23,11 +23,11 @@ function activate_devmode!()
     #RLEnvironments
     Pkg.activate("src/ReinforcementLearningEnvironments")
     Pkg.develop(path="src/ReinforcementLearningBase")
+    Pkg.develop(path="src/MultiAgentReinforcementLearning")
     # MultiAgentRL
     Pkg.activate("src/MultiAgentReinforcementLearning")
     Pkg.develop(path="src/ReinforcementLearningCore")
     Pkg.develop(path="src/ReinforcementLearningBase")
-    Pkg.develop(path="src/ReinforcementLearningEnvironments")
     #RLExperiments
     Pkg.activate("src/ReinforcementLearningExperiments")
     Pkg.develop(path=".")
