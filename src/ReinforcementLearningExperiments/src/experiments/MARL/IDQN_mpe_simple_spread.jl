@@ -28,7 +28,7 @@ s = ArgParseSettings()
     "episodes"
     help = "Number of epochs"
     arg_type = Int
-    default = 10
+    default = 100
 end
 arguments = parse_args(s)
 
@@ -99,11 +99,11 @@ function RL.Experiment(
         ),
         current_player(env)
     )
-   
-   
+
+
     stop_condition = StopAfterEpisode(arguments["episodes"], is_show_progress=!haskey(ENV, "CI"))
-    
-    hook = MeanSTDRewardHook(0, 1, 10, [], Float32[], Float32[])
+
+    hook = MeanSTDRewardHook(0, 1_000, 10, [], Float32[], Float32[])
 
 
     Experiment(policy, env, stop_condition, hook)

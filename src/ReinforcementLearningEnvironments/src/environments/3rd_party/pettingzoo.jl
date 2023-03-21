@@ -1,5 +1,5 @@
 using .PyCall
-
+import MultiAgentReinforcementLearning: CoordGraph
 
 np = pyimport("numpy")
 
@@ -12,10 +12,20 @@ export PettingzooEnv
     agent reinforcement learning algorithms implemented in JUlia ReinforcementLearning.
 """
 
+struct NoValidCG <: Exception
+end
+
+Base.showerror(io::IO, ::NoValidCG) = println(io, "For the specified environment there is no useful coordination graph defineable")
+
+export pettingzooDefault, pettingzooEnvType, noCG, pettingzooMpeEucDist, NoValidCG
+
 abstract type pettingzooEnvType end
+
+Base.@kwdef struct noCG <: pettingzooEnvType end
 
 Base.@kwdef struct pettingzooDefault <: pettingzooEnvType end
 
+Base.@kwdef struct pettingzooMpeEucDist <: pettingzooEnvType end
 
 function PettingzooEnv(name::String; seed=123, args...)
     if !PyCall.pyexists("pettingzoo.$name")
@@ -26,7 +36,16 @@ function PettingzooEnv(name::String; seed=123, args...)
     pyenv.reset(seed=seed)
     obs_space = space_transform(pyenv.observation_space(pyenv.agents[1]))
     act_space = space_transform(pyenv.action_space(pyenv.agents[1]))
-    env = PettingzooEnv{pettingzooDefault(),typeof(act_space),typeof(obs_space),typeof(pyenv)}(
+    mpe_euc = ["mpe.simple_spread_v2"]
+    no_cg = ["mpe.simple_v2"]
+    env_t = if name in mpe_euc
+                pettingzooMpeEucDist()
+            elseif name in no_cg
+                noCG()
+            else
+                pettingzooDefault()
+            end
+    env = PettingzooEnv{env_t,typeof(act_space),typeof(obs_space),typeof(pyenv)}(
         pyenv,
         obs_space,
         act_space,
@@ -124,10 +143,10 @@ end
 
 function (env::PettingzooEnv)(action::Integer)
     env.ts += 1
-    pycall(env.pyenv.step, PyObject, action)
-    if env.ts % length(players(env)) == 0
+    if env.pyenv.agent_selection == first(env.pyenv.agents)
         env.rewards = env.pyenv.rewards
     end
+    pycall(env.pyenv.step, PyObject, action)
 end
 
 # reward of player ======================================================================================================================
@@ -156,6 +175,21 @@ function RLBase.NumAgentStyle(env::PettingzooEnv)
     end
 end
 
+function CoordGraph(env::PettingzooEnv{pettingzooDefault})
+    P = players(env)
+    println(typeof(env))
+    return Dict(ρ => [p for p ∈ P if p != ρ] for ρ ∈ P)
+end
+
+function CoordGraph(env::PettingzooEnv{<:pettingzooMpeEucDist}; δ = 0.2f0)
+    return Dict(ρ =>
+    [p for p ∈ P if p != ρ && all(isless.(abs.(state(env, ρ)[3:4] - state(env, p)[3:4]), δ))]
+    for ρ ∈ P)
+end
+
+function CoordGraph(::PettingzooEnv{noCG})
+    throw(NoValidCG())
+end
 
 RLBase.DynamicStyle(::PettingzooEnv) = SEQUENTIAL
 RLBase.ActionStyle(::PettingzooEnv) = MINIMAL_ACTION_SET
