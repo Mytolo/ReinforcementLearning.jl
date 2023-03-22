@@ -24,7 +24,7 @@ function RLCore.Experiment(
     is_enable_double_DQN=true
 )
     rng = StableRNG(seed)
-    env = discrete2standard_discrete(PettingzooEnv("mpe.simple_v2"; seed=seed))
+    env = discrete2standard_discrete(PettingZooEnv("mpe.simple_v2"; seed=seed))
     ns, na = length(state(env)), length(action_space(env))
 
     agent = Agent(

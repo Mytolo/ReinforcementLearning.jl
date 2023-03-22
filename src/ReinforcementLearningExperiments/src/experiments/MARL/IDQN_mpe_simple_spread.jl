@@ -44,7 +44,7 @@ function RL.Experiment(
     γ=0.99f0,
 )
     rng = StableRNG(seed)
-    env = discrete2standard_discrete(ReinforcementLearning.PettingzooEnv("mpe.simple_spread_v2"; seed=seed))
+    env = discrete2standard_discrete(ReinforcementLearning.PettingZooEnv("mpe.simple_spread_v2"; seed=seed))
     ns, na = length(state(env)), length(action_space(env))
     create_policy() = QBasedPolicy(
         learner=DQNLearner(
