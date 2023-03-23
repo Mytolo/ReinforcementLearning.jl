@@ -5,6 +5,11 @@
 # P  : Type of environment most common: PyObject
 abstract type PettingZooEnvType end
 
+struct NoValidCG <: Exception
+end
+
+Base.showerror(io::IO, ::NoValidCG) = println(io, "NO_VALID_CG_EXCEPTION --- For the specified environment there is no useful coordination graph defineable")
+
 Base.@kwdef struct NoCG <: PettingZooEnvType end
 
 Base.@kwdef struct PettingZooDefault <: PettingZooEnvType end
@@ -18,7 +23,6 @@ mutable struct PettingZooEnv{T<:PettingZooEnvType,Ta,To,P} <: AbstractEnv
     state::P
     seed::Union{Int, Nothing}
     rewards::Dict{String, Any}
-    ts::Int
 end
 export PettingZooEnv
 

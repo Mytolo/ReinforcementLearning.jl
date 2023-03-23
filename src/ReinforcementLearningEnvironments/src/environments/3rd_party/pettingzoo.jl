@@ -13,12 +13,6 @@ export PettingZooEnv
     agent reinforcement learning algorithms implemented in JUlia ReinforcementLearning.
 """
 
-struct NoValidCG <: Exception
-end
-
-Base.showerror(io::IO, ::NoValidCG) = println(io, "NO_VALID_CG_EXCEPTION --- For the specified environment there is no useful coordination graph defineable")
-
-
 function PettingZooEnv(name::String; seed=123, args...)
     if !PyCall.pyexists("pettingzoo.$name")
        error("Cannot import pettingzoo.$name")
@@ -43,8 +37,7 @@ function PettingZooEnv(name::String; seed=123, args...)
         act_space,
         PyNULL,
         seed,
-        Dict(p => pyenv.rewards[p] for p in pyenv.agents),
-        1
+        Dict(p => pyenv.rewards[p] for p in pyenv.agents)
     )
     env
 end
@@ -53,7 +46,6 @@ end
 
 function RLBase.reset!(env::PettingZooEnv)
     pycall!(env.state, env.pyenv.reset, PyObject, env.seed)
-    env.ts = 1
     nothing
 end
 
@@ -101,11 +93,7 @@ RLBase.action_space(env::PettingZooEnv, player::DefaultPlayer) = env.action_spac
 
 function (env::PettingZooEnv)(actions::Dict, players::Tuple)
     @assert length(actions) == length(players)
-    env.ts += 1
     for p in players
-        if env.pyenv.agent_selection == first(env.pyenv.agents)
-            env.rewards = env.pyenv.rewards
-        end
         env(actions[p])
     end
 end
@@ -113,9 +101,6 @@ end
 function (env::PettingZooEnv)(actions::Dict, player)
     @assert length(actions) == length(players(env))
     for p in players(env)
-        if env.pyenv.agent_selection == first(env.pyenv.agents)
-            env.rewards = env.pyenv.rewards
-        end
         env(actions[p])
     end
 end
@@ -123,34 +108,35 @@ end
 function (env::PettingZooEnv)(actions::Dict{String, Int})
     @assert length(actions) == length(players(env))
     for p in env.pyenv.agents
+        pycall(env.pyenv.step, PyObject, actions[p])
         if env.pyenv.agent_selection == first(env.pyenv.agents)
             env.rewards = env.pyenv.rewards
         end
-        pycall(env.pyenv.step, PyObject, actions[p])
     end
 end
 
 function (env::PettingZooEnv)(actions::Dict{String, Real})
     @assert length(actions) == length(players(env))
-    env.ts += 1
     for p in env.pyenv.agents
+        pycall(env.pyenv.step, PyObject, np.array(actions[p]; dtype=np.float32))
         if env.pyenv.agent_selection == first(env.pyenv.agents)
             env.rewards = env.pyenv.rewards
         end
-        pycall(env.pyenv.step, PyObject, np.array(actions[p]; dtype=np.float32))
     end
 end
 
 function (env::PettingZooEnv)(action::Vector)
     pycall(env.pyenv.step, PyObject, np.array(action; dtype=np.float32))
-end
-
-function (env::PettingZooEnv)(action::Integer)
-    env.ts += 1
     if env.pyenv.agent_selection == first(env.pyenv.agents)
         env.rewards = env.pyenv.rewards
     end
+end
+
+function (env::PettingZooEnv)(action::Integer)
     pycall(env.pyenv.step, PyObject, action)
+    if env.pyenv.agent_selection == first(env.pyenv.agents)
+        env.rewards = env.pyenv.rewards
+    end
 end
 
 # reward of player ======================================================================================================================
@@ -164,10 +150,8 @@ end
 
 RLBase.players(env::PettingZooEnv) = env.pyenv.agents
 
-function RLBase.current_player(env::PettingZooEnv, post_action=false)
-    cur_id = env.ts % length(env.pyenv.agents) == 0 ? length(env.pyenv.agents) : env.ts % length(env.pyenv.agents)
-    cur_id = post_action ? (cur_id - 1 == 0 ? length(env.pyenv.agents) : cur_id - 1) : cur_id
-    return env.pyenv.agents[cur_id]
+function RLBase.current_player(env::PettingZooEnv)
+    return env.pyenv.agent_selection
 end
 
 function RLBase.NumAgentStyle(env::PettingZooEnv)
