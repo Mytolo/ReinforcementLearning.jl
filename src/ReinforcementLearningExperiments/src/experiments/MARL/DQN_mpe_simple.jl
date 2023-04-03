@@ -7,7 +7,7 @@
 # ---
 
 using PyCall
-using ReinforcementLearningCore, ReinforcementLearningBase, ReinforcementLearningZoo
+using ReinforcementLearning
 using Flux
 using Flux: glorot_uniform
 
@@ -28,7 +28,7 @@ function RLCore.Experiment(
     ns, na = length(state(env)), length(action_space(env))
 
     agent = Agent(
-        policy=QBasedPolicy(
+        QBasedPolicy(
             learner=DQNLearner(
                 approximator=Approximator(
                     model=TwinNetwork(
@@ -54,7 +54,7 @@ function RLCore.Experiment(
                 rng=rng,
             ),
         ),
-        trajectory=Trajectory(
+        Trajectory(
             container=CircularArraySARTTraces(
                 capacity=1000,
                 state=Float32 => (ns,),

@@ -31,25 +31,6 @@ function (hook::MeanRewardHook)(::PostEpisodeStage, policy, env)
             while !is_terminated(env)
                 env |> policy |> env
                 rew += reward(env)
-                println(reward(env))
-            end
-        end
-
-        push!(hook.episodes, hook.episode)
-        push!(hook.mean_rewards, rew / hook.eval_episode)
-    end
-    hook.episode += 1
-end
-
-function (hook::MeanRewardHook)(::PostEpisodeStage, policy, env::PettingZooEnv)
-    if hook.episode % hook.eval_rate == 0
-        # evaluate policy's performance
-        rew = 0
-        for _ in 1:hook.eval_episode
-            reset!(env)
-            while !is_terminated(env)
-                env |> policy |> env
-                rew += reward(env)
             end
         end
 
