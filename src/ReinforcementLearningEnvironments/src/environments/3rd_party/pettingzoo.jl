@@ -8,7 +8,7 @@ export PettingZooEnv
 """
     PettingZooEnv(;kwargs...)
 
-`PettingZooEnv` is an interface of the python library pettingzoo for multi agent reinforcement learning environments. It can be used to test multi
+`PettingZooEnv` is an interface of the python library Pettingzoo for multi agent reinforcement learning environments. It can be used to test multi
     agent reinforcement learning algorithms implemented in JUlia ReinforcementLearning.
 """
 
@@ -26,7 +26,8 @@ function PettingZooEnv(name::String; seed=123, args...)
         obs_space,
         act_space,
         PyNULL,
-        seed
+        seed,
+        1
     )
     env
 end
@@ -80,39 +81,40 @@ RLBase.action_space(env::PettingZooEnv, player::DefaultPlayer) = env.action_spac
 
 ## action functions ========================================================================================================================
 
-function (env::PettingZooEnv)(actions::Dict, players::Tuple)
-    @assert length(actions) == length(players)
-    for p in players
-        env(actions[p])
-    end
-end
-
-function (env::PettingZooEnv)(actions::Dict, player)
-    @assert length(actions) == length(players(env))
-    for p in players(env)
-        env(actions[p])
-    end
-end
-
-function (env::PettingZooEnv)(actions::Dict{String, Int})
+function RLBase.act!(env::PettingZooEnv, actions::Dict{Symbol, Int})
     @assert length(actions) == length(players(env))
     for p in env.pyenv.agents
         pycall(env.pyenv.step, PyObject, actions[p])
     end
 end
 
-function (env::PettingZooEnv)(actions::Dict{String, Real})
-    @assert length(actions) == length(players(env))
+function RLBase.act!(env::PettingZooEnv, actions::Dict{Symbol, Real})
+    @assert length(actions) == length(env.pyenv.agents)
     for p in env.pyenv.agents
         pycall(env.pyenv.step, PyObject, np.array(actions[p]; dtype=np.float32))
     end
 end
 
-function (env::PettingZooEnv)(action::Vector)
+function RLBase.act!(env::PettingZooEnv, actions::Dict{Symbol, Vector})
+    @assert length(actions) == length(env.pyenv.agents)
+    for p in env.pyenv.agents
+        RLBase.act!(env, p)
+    end
+end
+
+function RLBase.act!(env::PettingZooEnv, actions::NamedTuple)
+    @assert length(actions) == length(env.pyenv.agents)
+    for player ∈ players(env)
+        RLBase.act!(env, actions[player])
+    end
+end
+
+# for vectors, pettingzoo need them to be in proper numpy type
+function RLBase.act!(env::PettingZooEnv, action::Vector)
     pycall(env.pyenv.step, PyObject, np.array(action; dtype=np.float32))
 end
 
-function (env::PettingZooEnv)(action::Integer)
+function RLBase.act!(env::PettingZooEnv, action)
     pycall(env.pyenv.step, PyObject, action)
 end
 
@@ -128,7 +130,11 @@ end
 RLBase.players(env::PettingZooEnv) = Symbol.(env.pyenv.agents)
 
 function RLBase.current_player(env::PettingZooEnv)
-    return Symbol(env.pyenv.agent_selection)
+    return Symbol(env.pyenv.agents[env.current_player])
+end
+
+function RLBase.next_player!(env::PettingZooEnv)
+    env.current_player = env.current_player < length(env.pyenv.agents) ? env.current_player + 1 : 1
 end
 
 function RLBase.NumAgentStyle(env::PettingZooEnv)

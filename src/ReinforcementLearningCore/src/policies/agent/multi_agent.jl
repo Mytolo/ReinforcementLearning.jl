@@ -227,7 +227,7 @@ function Base.push!(composed_hook::ComposedHook{T},
 end
 
 function RLBase.plan!(multiagent::MultiAgentPolicy, env::E) where {E<:AbstractEnv}
-    return (RLBase.plan!(multiagent[player], env, player) for player in players(env))
+    return NamedTuple(player => RLBase.plan!(multiagent[player], env, player) for player in players(env))
 end
 
 function RLBase.optimise!(multiagent::MultiAgentPolicy, stage::S) where {S<:AbstractStage}

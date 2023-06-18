@@ -9,6 +9,7 @@ mutable struct PettingZooEnv{Ta,To,P} <: AbstractEnv
      action_space::Ta
      state::P
      seed::Union{Int, Nothing}
+     current_player::Int
 end
 
 export PettingzooEnv
