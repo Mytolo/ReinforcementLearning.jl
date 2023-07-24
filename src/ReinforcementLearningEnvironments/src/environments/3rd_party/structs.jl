@@ -1,9 +1,16 @@
 # Parametrization:
+# T  : Type of Environment -> Specialize CoordinationGraph
 # Ta : Type of action_space
 # To : Type of observation_space
 # P  : Type of environment most common: PyObject
+abstract type PettingZooEnvType end
 
-mutable struct PettingZooEnv{Ta,To,P} <: AbstractEnv
+Base.@kwdef struct PettingZooDefault <: PettingZooEnvType end
+
+Base.@kwdef struct PettingZooMpeEucDist <: PettingZooEnvType end
+
+
+mutable struct PettingZooEnv{T<: PettingZooEnvType,Ta,To,P} <: AbstractEnv
      pyenv::P
      observation_space::To
      action_space::Ta

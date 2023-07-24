@@ -21,7 +21,13 @@ function PettingZooEnv(name::String; seed=123, args...)
     pyenv.reset(seed=seed)
     obs_space = space_transform(pyenv.observation_space(pyenv.agents[1]))
     act_space = space_transform(pyenv.action_space(pyenv.agents[1]))
-    env = PettingZooEnv{typeof(act_space),typeof(obs_space),typeof(pyenv)}(
+    mpe_euc = ["mpe.simple_spread_v3"]
+    env_t = if name in mpe_euc
+                PettingZooMpeEucDist
+            else
+                PettingZooDefault
+            end
+    env = PettingZooEnv{env_t,typeof(act_space),typeof(obs_space),typeof(pyenv)}(
         pyenv,
         obs_space,
         act_space,
@@ -144,6 +150,13 @@ function RLBase.NumAgentStyle(env::PettingZooEnv)
     else
         MultiAgent(n)
     end
+end
+
+function RLBase.coordination_graph(env::PettingZooEnv{T, A, B, C}; δ = 0.2f0) where {T <: PettingZooMpeEucDist, A, B, C}
+    P = players(env)
+    return Dict(ρ =>
+    [p for p ∈ P if p != ρ && all(isless.(abs.(state(env, ρ)[3:4] - state(env, p)[3:4]), δ))]
+    for ρ ∈ P)
 end
 
 RLBase.DynamicStyle(::PettingZooEnv) = SIMULTANEOUS
