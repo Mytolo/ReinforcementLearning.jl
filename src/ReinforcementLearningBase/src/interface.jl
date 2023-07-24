@@ -9,7 +9,7 @@ Basically, we defined the following two main concepts in reinforcement learning:
 - [`AbstractEnv`](@ref)
 """ RLBase
 
-import Base: copy, copyto!, nameof
+import Base: copy, copyto!, nameof, showerror
 import Random: seed!, rand, AbstractRNG
 import AbstractTrees: children
 import Markdown
@@ -550,6 +550,18 @@ Used in imperfect multi-agent environments.
     reward(env, player=current_player(env))
 """
 @multi_agent_env_api reward(env::AbstractEnv, player=current_player(env))
+
+struct NoValidCG <: Exception
+end
+
+showerror(io::IO, ::NoValidCG) = println(io, "NO_VALID_CG_EXCEPTION --- For the specified environment there is no useful coordination graph available")
+
+@multi_agent_env_api function coordination_graph(env::AbstractEnv)
+    if RLBase.NumAgentStyle(env) isa SingleAgent
+        throw(NoValidCG())
+    end
+    return NamedTuple(p => [Π for Π ∈ players(env) if Π != p] for p ∈ players(env) )
+end
 
 """
     child(env::AbstractEnv, action)
